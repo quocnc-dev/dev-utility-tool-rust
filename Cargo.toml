@@ -1,0 +1,20 @@
+[package]
+name = "dev_utility_hub"
+version = "0.1.0"
+edition = "2021"
+description = "Bộ công cụ hỗ trợ lập trình viên đa nền tảng bằng Rust (Port Manager, Port Scanner, Process Explorer, Network Inspector, Formatter)"
+
+[dependencies]
+eframe = "0.37"
+egui_extras = "0.37"
+netstat2 = "0.11"
+sysinfo = "0.40"
+dotenvy = "0.15"
+serde_json = "1.0"
+base64 = "0.22"
+urlencoding = "2.1"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = true

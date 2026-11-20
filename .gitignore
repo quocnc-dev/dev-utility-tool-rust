@@ -1,0 +1,7 @@
+# Loại trừ thư mục biên dịch và các file cấu hình môi trường cục bộ
+/target/
+.env
+.env.local
+*.pdb
+.DS_Store
+Thumbs.db
