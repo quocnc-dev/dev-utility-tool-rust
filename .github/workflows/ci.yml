@@ -1,17 +1,31 @@
-name: Cross-Platform Build & Test
+name: Cross-Platform Build & Release Artifacts
 
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
-  build-and-test:
+  build-and-package:
+    name: Build trên ${{ matrix.os-name }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: macos-latest
+            os-name: macOS (Apple Silicon M-Series)
+            artifact_name: dev_utility_hub-macos-arm64
+            binary_path: target/release/dev_utility_hub
+          - os: windows-latest
+            os-name: Windows (x64)
+            artifact_name: dev_utility_hub-windows-x64
+            binary_path: target/release/dev_utility_hub.exe
+          - os: ubuntu-latest
+            os-name: Linux (Ubuntu x64)
+            artifact_name: dev_utility_hub-linux-x64
+            binary_path: target/release/dev_utility_hub
 
     runs-on: ${{ matrix.os }}
 
@@ -19,7 +33,7 @@ jobs:
       - name: Kiểm tra mã nguồn
         uses: actions/checkout@v4
 
-      - name: Cài đặt thư viện hệ thống cho Ubuntu
+      - name: Cài đặt thư viện đồ họa (chỉ Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
@@ -28,11 +42,15 @@ jobs:
       - name: Cài đặt Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Cache Cargo dependencies
-        uses: Swatinem/rust-cache@v2
-
       - name: Chạy unit & integration tests
         run: cargo test --verbose
 
-      - name: Biên dịch bản Release
-        run: cargo build --release --verbose
+      - name: Biên dịch bản Release tối ưu
+        run: cargo build --release
+
+      - name: Upload Artifacts (${{ matrix.artifact_name }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.binary_path }}
+          if-no-files-found: error
