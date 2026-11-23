@@ -75,31 +75,36 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
+      - name: Kiểm tra mã nguồn để đọc phiên bản
+        uses: actions/checkout@v4
+
       - name: Tải toàn bộ artifacts đã build
         uses: actions/download-artifact@v4
         with:
           path: release_assets
           merge-multiple: true
 
-      - name: Xác định tag và tiêu đề Release
+      - name: Xác định tag và tiêu đề Release riêng biệt
         id: release_meta
         run: |
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-            echo "title=Release ${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-            echo "prerelease=false" >> $GITHUB_OUTPUT
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+            echo "tag=${TAG_NAME}" >> $GITHUB_OUTPUT
+            echo "title=Release ${TAG_NAME}" >> $GITHUB_OUTPUT
           else
-            echo "tag=latest" >> $GITHUB_OUTPUT
-            echo "title=DevUtility Hub (Latest Build)" >> $GITHUB_OUTPUT
-            echo "prerelease=true" >> $GITHUB_OUTPUT
+            # Lấy số phiên bản từ Cargo.toml kết hợp số thứ tự lượt build GitHub
+            PKG_VERSION=$(grep '^version' Cargo.toml | head -n1 | cut -d '"' -f2)
+            TAG_NAME="v${PKG_VERSION}-build.${{ github.run_number }}"
+            echo "tag=${TAG_NAME}" >> $GITHUB_OUTPUT
+            echo "title=Release ${TAG_NAME}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Xuất bản lên GitHub Releases
+      - name: Xuất bản Release chính thức trên GitHub
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.release_meta.outputs.tag }}
           name: ${{ steps.release_meta.outputs.title }}
-          prerelease: ${{ steps.release_meta.outputs.prerelease == 'true' }}
+          prerelease: false
           generate_release_notes: true
           files: release_assets/*
         env:
