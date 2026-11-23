@@ -98,6 +98,12 @@ pub const DEFAULT_TCP_PING_PORT: &str = "80";
 pub const DEFAULT_JSON_SAMPLE: &str =
     "{\"app\":\"DevUtility Hub\",\"crossPlatform\":true,\"platforms\":[\"Windows\",\"macOS\",\"Linux\"]}";
 
+// Mẫu văn bản gốc và văn bản sửa đổi cho Diff Checker
+pub const DEFAULT_DIFF_LEFT_SAMPLE: &str =
+    "function calculateTotal(items) {\n    let total = 0;\n    for (let i = 0; i < items.length; i++) {\n        total += items[i].price;\n    }\n    return total;\n}";
+pub const DEFAULT_DIFF_RIGHT_SAMPLE: &str =
+    "function calculateTotal(items, discount = 0) {\n    const subtotal = items.reduce((sum, item) => sum + item.price, 0);\n    const finalTotal = subtotal * (1 - discount);\n    return Math.max(0, finalTotal);\n}";
+
 // Danh sách PID hệ thống quan trọng được bảo vệ khỏi thao tác Kill
 pub const PROTECTED_SYSTEM_PIDS: &[u32] = &[0, 4];
 

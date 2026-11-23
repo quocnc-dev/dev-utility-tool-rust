@@ -7,7 +7,9 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use dev_utility_hub::config::env_config::AppEnvConfig;
+use dev_utility_hub::models::diff_models::DiffOptions;
 use dev_utility_hub::models::port_models::ScanProgressMessage;
+use dev_utility_hub::services::diff_service::computeTextDiff;
 use dev_utility_hub::services::network_service::resolveHostAddresses;
 use dev_utility_hub::services::scanner_service::startBackgroundScan;
 use dev_utility_hub::utils::input_validator::{
@@ -141,4 +143,42 @@ fn testBackgroundPortScannerDetectsOpenLoopbackPort() {
     drop(listener);
     assert!(completed, "Quá trình quét cổng thử nghiệm phải hoàn tất");
     assert!(foundOpen, "Port Scanner phải phát hiện đúng cổng đang mở");
+}
+
+#[test]
+fn testDiffServiceDetectsAdditionsDeletionsAndUnchangedLines() {
+    let oldCode = "line1\nline2\nline3";
+    let newCode = "line1\nline2_modified\nline3\nline4_added";
+    let opts = DiffOptions::default();
+
+    let result = computeTextDiff(oldCode, newCode, &opts);
+    assert_eq!(result.summary.unchanged, 2, "line1 và line3 phải giữ nguyên");
+    assert_eq!(result.summary.deletions, 1, "line2 phải bị xóa");
+    assert_eq!(result.summary.additions, 2, "line2_modified và line4_added phải được thêm");
+
+    // Kiểm tra hàng Split View được dựng hợp lý
+    assert!(!result.splitRows.is_empty(), "Phải sinh ra các hàng split");
+}
+
+#[test]
+fn testDiffServiceHandlesWhitespaceAndCaseInsensitiveOptions() {
+    let left = "  HELLO World  \nLine 2";
+    let right = "hello world\nLine 2";
+
+    // Mặc định phân biệt hoa/thường và khoảng trắng
+    let strictOpts = DiffOptions::default();
+    let strictResult = computeTextDiff(left, right, &strictOpts);
+    assert_eq!(strictResult.summary.unchanged, 1);
+    assert_eq!(strictResult.summary.deletions, 1);
+    assert_eq!(strictResult.summary.additions, 1);
+
+    // Bật bỏ qua khoảng trắng và không phân biệt hoa thường
+    let relaxedOpts = DiffOptions {
+        ignoreWhitespace: true,
+        caseSensitive: false,
+    };
+    let relaxedResult = computeTextDiff(left, right, &relaxedOpts);
+    assert_eq!(relaxedResult.summary.unchanged, 2, "Cả hai dòng đều phải tính là khớp khi bỏ qua case & whitespace");
+    assert_eq!(relaxedResult.summary.additions, 0);
+    assert_eq!(relaxedResult.summary.deletions, 0);
 }

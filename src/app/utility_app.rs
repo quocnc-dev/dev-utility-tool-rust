@@ -9,6 +9,7 @@ use crate::config::app_constants::{
     SIDEBAR_MIN_WIDTH,
 };
 use crate::config::env_config::AppEnvConfig;
+use crate::tools::diff_checker_tool::DiffCheckerTool;
 use crate::tools::network_inspector_tool::NetworkInspectorTool;
 use crate::tools::port_manager_tool::PortManagerTool;
 use crate::tools::port_scanner_tool::PortScannerTool;
@@ -38,6 +39,7 @@ impl DevUtilityApp {
             )),
             Box::new(NetworkInspectorTool::new(envConfig.defaultTimeoutMs)),
             Box::new(TextFormatterTool::new()),
+            Box::new(DiffCheckerTool::new()),
         ];
 
         Self {
